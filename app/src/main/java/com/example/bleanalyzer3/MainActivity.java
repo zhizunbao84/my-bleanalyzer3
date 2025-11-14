@@ -16,6 +16,10 @@ import androidx.core.app.ActivityCompat;
 
 import java.util.*;
 
+import javax.crypto.Cipher;
+import javax.crypto.SecretKeySpec;
+import javax.crypto.spec.IvParameterSpec;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final int REQ_PERMISSION = 1;
