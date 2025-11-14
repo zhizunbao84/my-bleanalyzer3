@@ -135,6 +135,8 @@ public class MainActivity extends AppCompatActivity {
         scanCallback = new ScanCallback() {
             @Override
             public void onScanResult(int callbackType, ScanResult result) {
+                /* 先无脑打印所有广播包长度，确认回调 alive */
+                log("收到广播，长度=" + result.getScanRecord().getBytes().length + "  MAC=" + result.getDevice().getAddress());
                 parseXiaomiTempHumi(result);
             }
         };
