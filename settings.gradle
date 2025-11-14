@@ -1,4 +1,4 @@
 
 
-rootProject.name = "my-bleanalyzer"
+rootProject.name = "my-bleanalyzer3"
 include ':app'
