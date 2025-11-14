@@ -16,9 +16,11 @@ import androidx.core.app.ActivityCompat;
 
 import java.util.*;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.SecretKeySpec;
-import javax.crypto.spec.IvParameterSpec;
+import org.bouncycastle.crypto.modes.CCMBlockCipher;
+import org.bouncycastle.crypto.engines.AESEngine;
+import org.bouncycastle.crypto.params.KeyParameter;
+import org.bouncycastle.crypto.params.CCMParameters;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -206,32 +208,35 @@ public class MainActivity extends AppCompatActivity {
     /* ============ 3. 0x5B 解密实现 ============ */
     private void decrypt0x5B(String mac, byte[] raw, int offset, int dataLen) {
         try {
-            /* --- 1. 提取字段 --- */
-            int payloadOff = offset;
+            /* 1. 字段提取（同之前） */
             byte[] enc  = new byte[8];   // 8 字节 密文(含 4 字节 tag)
-            System.arraycopy(raw, payloadOff, enc, 0, 8);
+            System.arraycopy(raw, offset, enc, 0, 8);
             byte[] nonce = new byte[8];
             System.arraycopy(enc, 0, nonce, 0, 5);        // enc[0:5]
             byte[] macBytes = macToBytes(mac);
             System.arraycopy(macBytes, 3, nonce, 5, 3);   // MAC 后 3 字节
-    
             byte[] key = hexToBytes(TOKEN_HEX);
-            byte[] cipherText = new byte[5];              // 前 5 字节是密文+tag
+    
+            /* 2. BouncyCastle CCM 解密 */
+            org.bouncycastle.crypto.params.KeyParameter keyParam =
+                    new org.bouncycastle.crypto.params.KeyParameter(key);
+            org.bouncycastle.crypto.modes.CCMBlockCipher ccm =
+                    new org.bouncycastle.crypto.modes.CCMBlockCipher(
+                            new org.bouncycastle.crypto.engines.AESEngine());
+            ccm.init(false,
+                    new org.bouncycastle.crypto.params.CCMParameters(keyParam, 32, nonce)); // 32 bit = 4 byte tag
+    
+            byte[] cipherText = new byte[5];   // 前 5 字节 密文+tag
             System.arraycopy(enc, 0, cipherText, 0, 5);
+            byte[] plain = new byte[5];
+            int len = ccm.processBytes(cipherText, 0, 5, plain, 0);
+            ccm.doFinal(plain, len);
     
-            /* --- 2. AES-128-CCM 解密 --- */
-            Cipher cipher = Cipher.getInstance("AES/CCM/NoPadding");
-            SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
-            cipher.init(Cipher.DECRYPT_MODE, keySpec,
-                        new IvParameterSpec(nonce));
-            byte[] plain = cipher.doFinal(cipherText);    // 5 字节
-    
-            /* --- 3. 提取数值 --- */
+            /* 3. 取值 */
             int humidity = plain[0] & 0xFF;
             int tempRaw  = (plain[1] & 0xFF) | ((plain[2] & 0xFF) << 8);
             float temp   = tempRaw * 0.1f;
             int battery  = (plain[3] & 0xFF) | ((plain[4] & 0xFF) << 8);
-    
             log("★ 解密成功  温度=" + temp + "℃  湿度=" + humidity +
                 "%  电池=" + battery + " mV");
     
