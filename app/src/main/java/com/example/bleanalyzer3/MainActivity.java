@@ -135,6 +135,7 @@ public class MainActivity extends AppCompatActivity {
         scanCallback = new ScanCallback() {
             @Override
             public void onScanResult(int callbackType, ScanResult result) {
+
                 /* 先无脑打印所有广播包长度，确认回调 alive */
                 log("收到广播，长度=" + result.getScanRecord().getBytes().length + "  MAC=" + result.getDevice().getAddress());
                 parseXiaomiTempHumi(result);
@@ -155,6 +156,9 @@ public class MainActivity extends AppCompatActivity {
 
     /* ===================== 解析 ===================== */
     private void parseXiaomiTempHumi(ScanResult result) {
+        /* 1. 只打印指定 MAC 的广播包 */
+        String mac = result.getDevice().getAddress();
+        if (!"A4:C1:38:25:F4:AE".equalsIgnoreCase(mac)) return;
         byte[] raw = result.getScanRecord().getBytes();
         if (raw == null || raw.length < 15) return;
 
