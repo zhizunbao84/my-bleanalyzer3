@@ -157,6 +157,16 @@ public class MainActivity extends AppCompatActivity {
     private void parseXiaomiTempHumi(ScanResult result) {
         byte[] raw = result.getScanRecord().getBytes();
         if (raw == null || raw.length < 15) return;
+
+    /* 1. 无脑打印完整广播包 ＋ MAC */
+        StringBuilder hex = new StringBuilder("收到广播  MAC=");
+        hex.append(result.getDevice().getAddress()).append("  Len=")
+           .append(raw.length).append("  Data=");
+        for (byte b : raw) {
+            hex.append(String.format("%02X ", b & 0xFF));
+        }
+        log(hex.toString());
+        
         int idx = 0;
         while (idx < raw.length) {
             int len = raw[idx++] & 0xFF;
