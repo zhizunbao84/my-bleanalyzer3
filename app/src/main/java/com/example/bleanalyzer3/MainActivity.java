@@ -186,6 +186,14 @@ public class MainActivity extends AppCompatActivity {
             int type = raw[idx] & 0xFF;
             if (type == 0x16 && len >= 13) {
                 int uuid = (raw[idx + 1] & 0xFF) | ((raw[idx + 2] & 0xFF) << 8);
+                int uuidHi = (raw[idx + 3] & 0xFF) | ((raw[idx + 4] & 0xFF) << 8);
+                if (uuid == 0xFC40 && uuidHi == 0x00D2) {   // 0x00D2FC40
+                    int tempRaw = (raw[idx + 7] & 0xFF) | ((raw[idx + 8] & 0xFF) << 8);
+                    int humRaw  = raw[idx + 9] & 0xFF;
+                    float temp  = tempRaw * 0.1f;
+                    log("★ 明文Beacon 温度=" + temp + "℃  湿度=" + humRaw + "%");
+                    return;
+                }
                 if (uuid == 0xFE95) {
                     int frameType = raw[idx + 5] & 0xFF;
                     log(">>> frameType = 0x" + Integer.toHexString(frameType));
